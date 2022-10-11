@@ -1,8 +1,9 @@
 import "dotenv/config";
 import "./config/service-config";
-import app from "./app";
+import { httpServer, io } from "./app";
 import mongoose from "mongoose";
 import redis from "./services/redis";
+import initialize from "./tcp";
 
 const main = async () => {
   const PORT = process.env.PORT || 5000;
@@ -32,7 +33,8 @@ const main = async () => {
   }
   if (!successfulRedisConnection || !successfulMongoDBConnection) process.exit(0);
 
-  app.listen(PORT, () => console.log(`Server is running on PORT : ${PORT}`));
+  httpServer.listen(PORT, () => console.log(`Server is running on PORT : ${PORT}`));
+  initialize(io);
   statistics();
 };
 

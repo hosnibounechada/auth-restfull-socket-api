@@ -5,6 +5,9 @@ import { json, urlencoded } from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
+import { createServer } from "http";
+import { Server } from "socket.io";
+
 import { authRouter } from "./routes";
 import { currentUser, errorHandler } from "./middlewares";
 
@@ -27,4 +30,13 @@ app.use(currentUser);
 app.use(authRouter);
 
 app.use(errorHandler);
-export default app;
+
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:3000",
+    credentials: true,
+  },
+});
+
+export { httpServer, io };

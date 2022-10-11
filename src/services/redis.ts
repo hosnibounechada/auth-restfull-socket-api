@@ -7,16 +7,12 @@ class Redis {
   private constructor() {}
 
   private async connect() {
-    if (!process.env.REDIS_URI) throw new Error("REDIS_URI must be provided!");
-    Redis.client = createClient({
-      url: process.env.REDIS_URI,
-    });
-    // try {
-    //   await Redis.client.connect();
-    //   console.log("Connected Successfully to Redis URI :", process.env.REDIS_URI);
-    // } catch (err) {
-    //   console.error(err);
-    // }
+    // if (!process.env.REDIS_URI) throw new Error("REDIS_URI must be provided!");
+    // Redis.client = createClient({
+    //   url: process.env.REDIS_URI,
+    // });
+
+    Redis.client = createClient();
   }
 
   static getInstance() {
