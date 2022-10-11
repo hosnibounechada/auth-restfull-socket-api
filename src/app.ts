@@ -4,6 +4,7 @@ import "express-async-errors";
 import { json, urlencoded } from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import mongoSanitize from "express-mongo-sanitize";
 import corsConfig from "./config/cors-config";
 
 import { createServer } from "http";
@@ -20,6 +21,7 @@ app.use(cors(corsConfig));
 app.use(urlencoded({ extended: true }));
 app.use(json());
 app.use(cookieParser());
+app.use(mongoSanitize());
 
 app.use(currentUser);
 
