@@ -5,6 +5,10 @@ import { json, urlencoded } from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import mongoSanitize from "express-mongo-sanitize";
+import helmet from "helmet";
+import xss from "xss-clean";
+import rateLimit from "express-rate-limit";
+import hpp from "hpp";
 import corsConfig from "./config/cors-config";
 
 import { createServer } from "http";
@@ -22,6 +26,15 @@ app.use(urlencoded({ extended: true }));
 app.use(json());
 app.use(cookieParser());
 app.use(mongoSanitize());
+app.use(helmet());
+app.use(xss());
+app.use(hpp());
+app.use(
+  rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 100,
+  })
+);
 
 app.use(currentUser);
 
