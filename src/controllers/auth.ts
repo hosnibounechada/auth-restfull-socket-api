@@ -263,19 +263,31 @@ export const forgotPasswordCode = async (req: Request, res: Response) => {
 
   await client.setEx(email, Number(process.env.CODE_TTL) || 60 * 5, code.toString());
 
-  const options = resetPasswordEmail(email, code);
+  // const options = resetPasswordEmail(email, code);
 
-  const response = await sendEmail(options);
+  // const response = await sendEmail(options);
 
-  if (!response) throw new BadRequestError("Couldn't send Email");
+  // if (!response) throw new BadRequestError("Couldn't send Email");
 
-  res.status(200).send({ success: true });
+  res.send({ success: true });
+};
+
+export const verifyCode = async (req: Request, res: Response) => {
+  const { email, code } = req.body;
+
+  const value = await client.get(email);
+
+  if (!value) throw new BadRequestError("Code expired");
+
+  if (value != code) throw new BadRequestError("Wrong code");
+
+  res.send({ success: true });
 };
 
 export const confirmPasswordCode = async (req: Request, res: Response) => {
   const { email, password, code } = req.body;
 
-  const value = await client.get(email);
+  const value = await client.getDel(email);
 
   if (!value) throw new BadRequestError("Code expired");
 
@@ -285,11 +297,11 @@ export const confirmPasswordCode = async (req: Request, res: Response) => {
 
   if (!user) throw new BadRequestError("Email doesn't exist");
 
-  user.set({ password: password });
+  user.set({ "local.password": password });
 
-  user.save();
+  await user.save();
 
-  res.status(200).send(user);
+  res.send({ success: true });
 };
 
 export const deleteAccount = async (req: Request, res: Response) => {

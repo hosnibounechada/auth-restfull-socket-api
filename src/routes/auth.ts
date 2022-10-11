@@ -20,6 +20,7 @@ import {
   removeProfilePicture,
   getNewAccessToken,
   logOut,
+  verifyCode,
 } from "../controllers/auth";
 import { RequestValidator, requireAuth, decodeRefreshToken } from "../middlewares";
 import {
@@ -65,9 +66,11 @@ router.post("/sendPhoneCode", requireAuth, phoneValidator, RequestValidator, sen
 
 router.post("/confirmPhoneCode", requireAuth, confirmPhoneValidator, RequestValidator, confirmPhone);
 
-router.post("/forgotPasswordViaRedis", emailValidator, RequestValidator, forgotPasswordCode);
+router.post("/forgotPassword", emailValidator, RequestValidator, forgotPasswordCode);
 
-router.post("/resetPasswordViaRedis", resetPasswordValidator, RequestValidator, confirmPasswordCode);
+router.post("/verifyCode", updateEmailValidator, RequestValidator, verifyCode);
+
+router.post("/resetPassword", resetPasswordValidator, RequestValidator, confirmPasswordCode);
 
 router.post("/uploadProfilePicture", requireAuth, upload.single("file"), uploadProfilePicture);
 
