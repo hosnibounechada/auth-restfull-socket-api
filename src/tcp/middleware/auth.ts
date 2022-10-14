@@ -8,8 +8,19 @@ interface UserPayload {
 }
 
 export const authenticationMiddleware = (socket: Socket, next: (err?: ExtendedError) => void) => {
-  // console.log("socket connection established!", socket.handshake.auth.token);
-  // const token = socket.handshake.auth.token;
+  //console.log("socket connection established!", socket.handshake.auth.token);
+
+  // authentication using access token
+  // if (!socket.handshake.auth.token) return next(new Error("not authorized"));
+  // const accessToken = socket.handshake.auth.token;
+  // try {
+  //   const { id } = jwt.verify(accessToken, process.env.ACCESS_TOKEN_KEY!) as UserPayload;
+  //   socket.handshake.headers.user = id;
+  // } catch {
+  //   return next(new Error("not authorized"));
+  // }
+
+  // authentication using refresh Token
   if (!socket.request.headers.cookie) return next(new Error("not authorized"));
   const refreshToken = socket.request.headers.cookie.split("=")[1];
   try {

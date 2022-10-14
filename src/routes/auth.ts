@@ -1,4 +1,4 @@
-import express, { Router } from "express";
+import express from "express";
 import multer from "multer";
 import {
   register,
@@ -44,7 +44,7 @@ router.post("/register", registerValidator, RequestValidator, register);
 
 router.post("/login", loginValidator, RequestValidator, login);
 
-router.post("/verifyEmail", verifyEmail);
+router.post("/verifyEmail", updateEmailValidator, RequestValidator, verifyEmail);
 
 router.get("/me", getCurrentUser);
 

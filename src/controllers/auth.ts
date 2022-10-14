@@ -45,7 +45,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 };
 
 export const register = async (req: Request, res: Response) => {
-  const { firstName, lastName, email, password, google } = req.body;
+  const { firstName, lastName, email, password } = req.body;
 
   const existingUser = await User.findOne({ email });
 
@@ -59,7 +59,7 @@ export const register = async (req: Request, res: Response) => {
     username,
     email,
     local: { password },
-    google: { id: google },
+    // google: { id: google },
   });
   await user.save();
 
@@ -115,11 +115,19 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
   if (value != code) throw new BadRequestError("Incorrect Code!");
 
-  user.set({ verified: true });
+  const data = { id: user.id, email: user.email };
+
+  const refreshToken = JwtProvider.jwtAuth(data, process.env.REFRESH_TOKEN_KEY!, process.env.RTK_TTL!);
+
+  const accessToken = JwtProvider.jwtAuth(data, process.env.ACCESS_TOKEN_KEY!, process.env.ATK_TTL!);
+
+  res.cookie("jwt", refreshToken, { httpOnly: true, maxAge: 60 * 60 * 1000 });
+
+  user.set({ verified: true, refreshToken });
 
   await user.save();
 
-  return res.status(200).send({ user });
+  return res.status(200).send({ user, accessToken });
 };
 
 export const updateUser = async (req: Request, res: Response) => {
