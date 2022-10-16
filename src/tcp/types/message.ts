@@ -1,6 +1,7 @@
 // message type definition for easier developing and less typos making.
-export type Message = {
+export type MessageType = {
   from: string;
   to: string;
-  message: string;
+  type: string;
+  content: string;
 };

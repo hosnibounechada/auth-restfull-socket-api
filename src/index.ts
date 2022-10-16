@@ -1,5 +1,4 @@
 import "dotenv/config";
-import "./config/service-config";
 import { httpServer, io } from "./app";
 import mongoose from "mongoose";
 import redis from "./services/redis";

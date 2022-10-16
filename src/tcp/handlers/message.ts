@@ -1,8 +1,9 @@
 import { Server, Socket } from "socket.io";
-import { EVENTS, Message } from "../types";
+import { EVENTS, MessageType } from "../types";
 import { messageSchema } from "../validators";
 import { DataValidator } from "../services";
 import redis from "../../services/redis";
+import { sendMessage } from "../controllers/message";
 
 const client = redis.getRedisClient();
 
@@ -11,13 +12,15 @@ export const registerMessagesHandler = (io: Server, socket: Socket) => {
     console.log("data:", data);
   });
 
-  socket.on(EVENTS.MESSAGE_TO_SERVER, async (message: Message) => {
+  socket.on(EVENTS.MESSAGE_TO_SERVER, async (data: MessageType) => {
     //for more security reasons we can extract the user id from socket.handshake.auth.token
-    if (!DataValidator.isValid(messageSchema, message)) return;
-    console.log("from client", socket.handshake.headers.user, ":", message);
+    if (!DataValidator.isValid(messageSchema, data)) return;
+    console.log("from client", socket.handshake.headers.user, ":", data);
     // save message in persistent database before triggering the event
-    //
+    const message = await sendMessage(data);
+    console.log(message);
     // send private message to particular user
-    io.to(message.to).emit(EVENTS.MESSAGE_TO_CLIENT, message);
+    io.to(message.from.toString()).emit(EVENTS.MESSAGE_TO_CLIENT, message);
+    //socket.emit(EVENTS.MESSAGE_TO_CLIENT, message);
   });
 };

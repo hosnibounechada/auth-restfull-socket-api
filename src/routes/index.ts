@@ -1,3 +1,4 @@
 import authRouter from "./auth";
+import friendsRouter from "./friends";
 
-export { authRouter };
+export { authRouter, friendsRouter };

@@ -5,7 +5,8 @@ export const messageSchema = {
   properties: {
     from: { type: "string" },
     to: { type: "string" },
-    message: { type: "string" },
+    type: { type: "string" },
+    content: { type: "string" },
   },
-  required: ["from", "to", "message"],
+  required: ["from", "to", "type", "content"],
 };

@@ -35,14 +35,22 @@ const messageSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      default: "text",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(_, ret) {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+      },
+    },
+  }
 );
 
 messageSchema.statics.build = (attrs: MessageAttrs) => {
-  return new Message();
+  return new Message(attrs);
 };
 
 const Message = mongoose.model<MessageDoc, MessageModel>("Message", messageSchema);

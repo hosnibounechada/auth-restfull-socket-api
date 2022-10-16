@@ -13,9 +13,10 @@ export const registerAuthHandler = (io: Server, socket: Socket) => {
   console.log("user :", userId, " / socket ID :", socket.id, " / has connected");
 
   const userJoin = async () => {
+    console.log(`id:${userId};`);
     socket.join(userId);
     // get friends from Redis instead of memory
-    socket.join(friends[userId]);
+    //socket.join(friends[userId]);
     // will be removed and store connection status in Redis instead
     addUser({ userId: userId, socketId: socket.id });
     await client.sAdd("online", userId);
