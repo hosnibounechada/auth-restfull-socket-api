@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
-import mongoose from "mongoose";
-import { BadRequestError } from "../errors";
 import { User } from "../models";
+import { MongoTransaction } from "../services";
 
 export const sendRequest = async (req: Request, res: Response) => {
   let success = false;
@@ -10,16 +9,13 @@ export const sendRequest = async (req: Request, res: Response) => {
 
   const { to } = req.params;
 
-  if (!id || !to) throw new BadRequestError("User not found");
-
-  const session = await mongoose.startSession();
-
-  session.startTransaction();
+  const session = await MongoTransaction.startSessionAndStartTransaction();
 
   const currentUser = await User.updateOne(
     {
       _id: id,
       "friends.id": { $ne: to },
+      "requests.id": { $ne: to },
     },
     {
       $push: {
@@ -34,6 +30,7 @@ export const sendRequest = async (req: Request, res: Response) => {
     {
       _id: to,
       "friends.id": { $ne: id },
+      "invitations.id": { $ne: id },
     },
     {
       $addToSet: {
@@ -46,15 +43,11 @@ export const sendRequest = async (req: Request, res: Response) => {
   );
 
   if (!currentUser.modifiedCount || !user.modifiedCount) {
-    await session.abortTransaction();
-
-    await session.endSession();
+    await MongoTransaction.abortTransactionAndEndSession(session);
 
     return res.send({ success });
   }
-  await session.commitTransaction();
-
-  await session.endSession();
+  await MongoTransaction.commitTransactionAndEndSession(session);
 
   success = true;
 
@@ -68,11 +61,7 @@ export const acceptRequest = async (req: Request, res: Response) => {
 
   const { from } = req.params;
 
-  if (!id || !from) throw new BadRequestError("User not found");
-
-  const session = await mongoose.startSession();
-
-  session.startTransaction();
+  const session = await MongoTransaction.startSessionAndStartTransaction();
 
   const currentUser = await User.updateOne(
     {
@@ -80,7 +69,7 @@ export const acceptRequest = async (req: Request, res: Response) => {
       "friends.id": { $ne: from },
     },
     {
-      $push: {
+      $addToSet: {
         friends: {
           id: from,
           sender: from,
@@ -112,15 +101,11 @@ export const acceptRequest = async (req: Request, res: Response) => {
   );
 
   if (!currentUser.modifiedCount || !fromUser.modifiedCount) {
-    await session.abortTransaction();
-
-    await session.endSession();
+    await MongoTransaction.abortTransactionAndEndSession(session);
 
     return res.send({ success });
   }
-  await session.commitTransaction();
-
-  await session.endSession();
+  await MongoTransaction.commitTransactionAndEndSession(session);
 
   success = true;
 
@@ -134,11 +119,7 @@ export const rejectRequest = async (req: Request, res: Response) => {
 
   const { from } = req.params;
 
-  if (!id || !from) throw new BadRequestError("User not found");
-
-  const session = await mongoose.startSession();
-
-  session.startTransaction();
+  const session = await MongoTransaction.startSessionAndStartTransaction();
 
   const currentUser = await User.updateOne(
     {
@@ -164,15 +145,11 @@ export const rejectRequest = async (req: Request, res: Response) => {
   );
 
   if (!currentUser.modifiedCount || !fromUser.modifiedCount) {
-    await session.abortTransaction();
-
-    await session.endSession();
+    await MongoTransaction.abortTransactionAndEndSession(session);
 
     return res.send({ success });
   }
-  await session.commitTransaction();
-
-  await session.endSession();
+  await MongoTransaction.commitTransactionAndEndSession(session);
 
   success = true;
 
@@ -186,11 +163,7 @@ export const unfriendUser = async (req: Request, res: Response) => {
 
   const { userId } = req.params;
 
-  if (!id || !userId) throw new BadRequestError("User not found");
-
-  const session = await mongoose.startSession();
-
-  session.startTransaction();
+  const session = await MongoTransaction.startSessionAndStartTransaction();
 
   const currentUser = await User.updateOne(
     {
@@ -216,15 +189,11 @@ export const unfriendUser = async (req: Request, res: Response) => {
   );
 
   if (!currentUser.modifiedCount || !user.modifiedCount) {
-    await session.abortTransaction();
-
-    await session.endSession();
+    await MongoTransaction.abortTransactionAndEndSession(session);
 
     return res.send({ success });
   }
-  await session.commitTransaction();
-
-  await session.endSession();
+  await MongoTransaction.commitTransactionAndEndSession(session);
 
   success = true;
 
@@ -238,15 +207,12 @@ export const blockUser = async (req: Request, res: Response) => {
 
   const { userId } = req.params;
 
-  if (!id || !userId) throw new BadRequestError("User not found");
-
-  const session = await mongoose.startSession();
-
-  session.startTransaction();
+  const session = await MongoTransaction.startSessionAndStartTransaction();
 
   const currentUser = await User.updateOne(
     {
       _id: id,
+      "blocked.id": { $ne: userId },
     },
     {
       $push: {
@@ -273,15 +239,11 @@ export const blockUser = async (req: Request, res: Response) => {
   );
 
   if (!currentUser.modifiedCount || !user.modifiedCount) {
-    await session.abortTransaction();
-
-    await session.endSession();
+    await MongoTransaction.abortTransactionAndEndSession(session);
 
     return res.send({ success });
   }
-  await session.commitTransaction();
-
-  await session.endSession();
+  await MongoTransaction.commitTransactionAndEndSession(session);
 
   success = true;
 
@@ -295,12 +257,6 @@ export const unblockUser = async (req: Request, res: Response) => {
 
   const { userId } = req.params;
 
-  if (!id || !userId) throw new BadRequestError("User not found");
-
-  const session = await mongoose.startSession();
-
-  session.startTransaction();
-
   const currentUser = await User.updateOne(
     {
       _id: id,
@@ -309,32 +265,12 @@ export const unblockUser = async (req: Request, res: Response) => {
       $pull: {
         blocked: { id: userId },
       },
-    },
-    { session }
-  );
-  const user = await User.updateOne(
-    {
-      _id: userId,
-    },
-    {
-      $pull: {
-        blocked: { id: id },
-      },
-    },
-    { session }
+    }
   );
 
-  if (!currentUser.modifiedCount || !user.modifiedCount) {
-    await session.abortTransaction();
-
-    await session.endSession();
-
+  if (!currentUser.modifiedCount) {
     return res.send({ success });
   }
-  await session.commitTransaction();
-
-  await session.endSession();
-
   success = true;
 
   return res.send({ success });
