@@ -26,6 +26,26 @@ interface UserDoc extends mongoose.Document<any> {
   google?: { id: string };
   verified?: boolean;
   refreshToken: string;
+  friends: {
+    id: string;
+    sender: string;
+    lastMessage?: string;
+    viewed?: boolean;
+  }[];
+  requests: {
+    id: string;
+  }[];
+  invitations: {
+    id: string;
+    viewed?: boolean;
+  }[];
+  blocked: {
+    id: string;
+  }[];
+  reports: {
+    id: string;
+    description: string;
+  }[];
 }
 
 interface UserModel extends mongoose.Model<UserDoc> {
@@ -93,6 +113,60 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    friends: [
+      new mongoose.Schema(
+        {
+          id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+          sender: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+          lastMessage: {
+            type: String,
+            default: "Say Hi",
+          },
+          viewed: {
+            type: Boolean,
+            default: false,
+          },
+        },
+        { timestamps: true, _id: false }
+      ),
+    ],
+    requests: [
+      new mongoose.Schema(
+        {
+          id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        },
+        { timestamps: true, _id: false }
+      ),
+    ],
+    invitations: [
+      new mongoose.Schema(
+        {
+          id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+          viewed: {
+            type: Boolean,
+            default: false,
+          },
+        },
+        { timestamps: true, _id: false }
+      ),
+    ],
+    blocked: [
+      new mongoose.Schema(
+        {
+          id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        },
+        { timestamps: true, _id: false }
+      ),
+    ],
+    reports: [
+      new mongoose.Schema(
+        {
+          id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+          description: { type: String },
+        },
+        { timestamps: true, _id: false }
+      ),
+    ],
   },
   {
     timestamps: true,
