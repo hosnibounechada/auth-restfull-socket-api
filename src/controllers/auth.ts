@@ -51,11 +51,14 @@ export const register = async (req: Request, res: Response) => {
 
   if (existingUser) throw new BadRequestError("E-mail in Use");
 
+  const displayName = `${firstName} ${lastName}`;
+
   const username = RandomGenerator.username(firstName, lastName);
 
   const user = User.build({
     firstName,
     lastName,
+    displayName,
     username,
     email,
     local: { password },
