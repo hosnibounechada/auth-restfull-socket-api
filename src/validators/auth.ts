@@ -1,8 +1,8 @@
 import { body, oneOf } from "express-validator";
 
-const firstName = body("firstName").toLowerCase().isLength({ min: 1, max: 25 }).withMessage("Invalid first name");
-const lastName = body("lastName").toLowerCase().isLength({ min: 1, max: 25 }).withMessage("Invalid last name");
-const username = body("username").isLength({ min: 6, max: 25 }).withMessage("Invalid username");
+const firstName = body("firstName").isLength({ min: 1, max: 25 }).trim().withMessage("Invalid first name");
+const lastName = body("lastName").isLength({ min: 1, max: 25 }).trim().withMessage("Invalid last name");
+const username = body("username").isLength({ min: 6, max: 55 }).withMessage("Invalid username");
 const notUsername = body("username").not().exists().withMessage("Invalid Input");
 const email = body("email").isEmail().normalizeEmail().withMessage("Invalid E-mail");
 const notEmail = body("email").not().exists().withMessage("Invalid Input");
