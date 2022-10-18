@@ -8,6 +8,7 @@ const main = async () => {
   const PORT = process.env.PORT || 5000;
 
   if (!process.env.MONGO_URI) throw new Error("MONGO_URI must be provided!");
+  if (!process.env.MONGO_LOCAL) throw new Error("MONGO_LOCAL must be provided!");
   if (!process.env.TWILIO_ACCOUNT_SID) throw new Error("TWILIO_ACCOUNT_SID must be provided!");
   if (!process.env.TWILIO_AUTH_TOKEN) throw new Error("TWILIO_ACCOUNT_SID must be provided!");
   if (!process.env.TWILIO_SERVICE_SID) throw new Error("TWILIO_ACCOUNT_SID must be provided!");
@@ -24,7 +25,7 @@ const main = async () => {
 
   let successfulMongoDBConnection = false;
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_LOCAL);
     console.log("Connected Successfully to MongoDB URI :", process.env.MONGO_URI);
     successfulMongoDBConnection = true;
   } catch (error) {

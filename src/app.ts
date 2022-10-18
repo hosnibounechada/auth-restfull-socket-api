@@ -14,7 +14,7 @@ import corsConfig from "./config/cors-config";
 import { createServer } from "http";
 import { Server } from "socket.io";
 
-import { authRouter, friendsRouter } from "./routes";
+import { authRouter, userRouter } from "./routes";
 import { currentUser, errorHandler, requireAuth } from "./middlewares";
 
 const app = express();
@@ -39,7 +39,7 @@ app.use(
 app.use(currentUser);
 
 app.use("/auth", authRouter);
-app.use("/friends", requireAuth, friendsRouter);
+app.use("/users", requireAuth, userRouter);
 
 app.use(errorHandler);
 
