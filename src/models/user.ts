@@ -15,7 +15,7 @@ interface UserAttrs {
   verified?: boolean;
 }
 
-interface UserDoc extends mongoose.Document<any> {
+export interface UserDoc extends mongoose.Document<any> {
   firstName: string;
   lastName: string;
   displayName: string;

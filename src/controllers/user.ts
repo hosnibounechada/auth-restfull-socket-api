@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
-import { NotFoundError } from "../errors";
+import { BadRequestError, NotFoundError } from "../errors";
 import { User } from "../models";
 import { MongoTransaction } from "../services";
+import { getUserProjections } from "../mongo/projections/user";
 
 export const getUserById = async (req: Request, res: Response) => {
+  const currentUserId = req.currentUser?.id;
   const { id } = req.params;
 
-  const user = await User.findById(id);
+  const user = await User.findById(id, getUserProjections(currentUserId));
 
   if (!user) throw new NotFoundError();
 
@@ -18,7 +20,10 @@ export const getUsersByDisplayName = async (req: Request, res: Response) => {
   const displayName = req.query.displayName?.toString() || "";
   const page = +req.query.page! || 0;
 
-  const users = await User.find({ displayName: { $regex: "^" + displayName, $options: "i" }, _id: { $ne: id }, "blocked.id": { $ne: id } })
+  const users = await User.find(
+    { displayName: { $regex: "^" + displayName, $options: "i" }, _id: { $ne: id }, "blocked.id": { $ne: id } },
+    getUserProjections(id)
+  )
     .skip(page * 2)
     .limit(2);
 
@@ -31,6 +36,8 @@ export const sendRequest = async (req: Request, res: Response) => {
   const id = req.currentUser?.id;
 
   const { to } = req.params;
+
+  if (id === to) throw new BadRequestError("invalid request");
 
   const session = await MongoTransaction.startSessionAndStartTransaction();
 
