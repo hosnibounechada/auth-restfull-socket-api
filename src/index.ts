@@ -7,8 +7,8 @@ import initialize from "./tcp";
 const main = async () => {
   const PORT = process.env.PORT || 5000;
 
-  if (!process.env.MONGO_URI) throw new Error("MONGO_URI must be provided!");
-  if (!process.env.MONGO_LOCAL) throw new Error("MONGO_LOCAL must be provided!");
+  if (!process.env.REDIS_LOCAL && !process.env.REDIS_URI) throw new Error("REDIS_URI must be provided!");
+  if (!process.env.MONGO_URI && !process.env.MONGO_LOCAL) throw new Error("MONGO_URI must be provided!");
   if (!process.env.TWILIO_ACCOUNT_SID) throw new Error("TWILIO_ACCOUNT_SID must be provided!");
   if (!process.env.TWILIO_AUTH_TOKEN) throw new Error("TWILIO_ACCOUNT_SID must be provided!");
   if (!process.env.TWILIO_SERVICE_SID) throw new Error("TWILIO_ACCOUNT_SID must be provided!");
@@ -16,8 +16,9 @@ const main = async () => {
   const client = redis.getRedisClient();
   let successfulRedisConnection = false;
   try {
+    let redis_uri = process.env.REDIS_LOCAL || process.env.REDIS_URI;
     await client.connect();
-    console.log("Connected Successfully to Redis URI :", process.env.REDIS_URI);
+    console.log("Connected Successfully to Redis URI :", redis_uri);
     successfulRedisConnection = true;
   } catch (err) {
     console.error(err);
@@ -25,8 +26,9 @@ const main = async () => {
 
   let successfulMongoDBConnection = false;
   try {
-    await mongoose.connect(process.env.MONGO_LOCAL);
-    console.log("Connected Successfully to MongoDB URI :", process.env.MONGO_URI);
+    let mongo_uri = process.env.MONGO_LOCAL! || process.env.MONGO_URI!;
+    await mongoose.connect(mongo_uri);
+    console.log("Connected Successfully to MongoDB URI :", mongo_uri);
     successfulMongoDBConnection = true;
   } catch (error) {
     console.error(error);
