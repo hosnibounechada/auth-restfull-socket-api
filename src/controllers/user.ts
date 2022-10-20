@@ -3,6 +3,11 @@ import { BadRequestError, NotFoundError } from "../errors";
 import { User } from "../models";
 import { MongoTransaction } from "../services";
 import { getUserProjections } from "../mongo/projections/user";
+import { friendsMessagesPipeLine, onlineFriendsPipeLine } from "../mongo/pipes/user";
+import redis from "../services/redis";
+import { FriendType, OnlineType } from "../types/user";
+
+const client = redis.getRedisClient();
 
 export const getUserById = async (req: Request, res: Response) => {
   const currentUserId = req.currentUser?.id;
@@ -19,15 +24,49 @@ export const getUsersByDisplayName = async (req: Request, res: Response) => {
   const id = req.currentUser?.id;
   const displayName = req.query.displayName?.toString() || "";
   const page = +req.query.page! || 0;
+  const limit = 2;
 
   const users = await User.find(
     { displayName: { $regex: "^" + displayName, $options: "i" }, _id: { $ne: id }, "blocked.id": { $ne: id } },
     getUserProjections(id)
   )
-    .skip(page * 2)
-    .limit(2);
+    .skip(page * limit)
+    .limit(limit);
 
   res.send({ users });
+};
+
+export const getOnlineFriends = async (req: Request, res: Response) => {
+  const id = req.currentUser?.id!;
+
+  const friends: OnlineType[] = await User.aggregate(onlineFriendsPipeLine(id));
+
+  const friendsIds = friends.map((friend) => friend.id);
+
+  const online = await client.smIsMember("online", friendsIds);
+
+  const result = friends.filter((_, index) => online[index]);
+
+  res.send({ result });
+};
+
+export const getFriendsMessages = async (req: Request, res: Response) => {
+  const id = req.currentUser?.id!;
+  const page = +req.query.page! || 0;
+  const limit = 1;
+  let skip = page * limit;
+
+  const friends: FriendType[] = await User.aggregate(friendsMessagesPipeLine(id, skip, limit));
+
+  const friendsIds = friends.map((friend) => friend.id);
+
+  const online = await client.smIsMember("online", friendsIds);
+
+  const result = friends.map((friend, index) => {
+    return { ...friend, status: online[index] };
+  });
+
+  res.send({ result });
 };
 
 export const sendRequest = async (req: Request, res: Response) => {
