@@ -9,6 +9,8 @@ import {
   reportUser,
   getUserById,
   getUsersByDisplayName,
+  getFriendsMessages,
+  getOnlineFriends,
 } from "../controllers/user";
 import { RequestValidator } from "../middlewares";
 import { idValidator } from "../validators/user";
@@ -24,6 +26,8 @@ router.get("/rejectRequest/:from", idValidator("from"), RequestValidator, reject
 router.get("/unfriendUser/:userId", idValidator("userId"), RequestValidator, unfriendUser);
 router.get("/blockUser/:userId", idValidator("userId"), RequestValidator, blockUser);
 router.get("/unblockUser/:userId", idValidator("userId"), RequestValidator, unblockUser);
-router.get("/reportUser/:userId", idValidator("userId"), RequestValidator, reportUser);
+router.post("/reportUser/:userId", idValidator("userId"), RequestValidator, reportUser);
+router.get("/messages/friendsMessages", getFriendsMessages);
+router.get("/friends/online", getOnlineFriends);
 
 export default router;
