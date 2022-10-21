@@ -21,6 +21,7 @@ import {
   getNewAccessToken,
   logOut,
   verifyCode,
+  uploadToFirebase,
 } from "../controllers/auth";
 import { RequestValidator, requireAuth, decodeRefreshToken } from "../middlewares";
 import {
@@ -79,5 +80,7 @@ router.get("/removeProfilePicture", requireAuth, removeProfilePicture);
 router.get("/logout", requireAuth, logOut);
 
 router.delete("/", requireAuth, deleteAccount);
+
+router.post("/uploadToFirebase", requireAuth, upload.single("file"), uploadToFirebase);
 
 export default router;

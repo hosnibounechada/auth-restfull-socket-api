@@ -12,6 +12,10 @@ import { BadRequestError, GoneError, NotFoundError, NotAuthorizedError, NotAuthe
 import { RandomGenerator, PasswordHash, JwtProvider } from "../services";
 import { confirmationEmail, resetPasswordEmail } from "../templates/email";
 
+import FormData from "form-data";
+import storage from "../services/firebase";
+import { uploadBytesResumable, ref, getDownloadURL } from "firebase/storage";
+
 const client = redis.getRedisClient();
 
 export const getNewAccessToken = async (req: Request, res: Response) => {
@@ -389,4 +393,40 @@ export const logOut = async (req: Request, res: Response) => {
   res.clearCookie("jwt");
 
   res.status(200).send({ user: {} });
+};
+
+export const uploadToFirebase = async (req: Request, res: Response) => {
+  const id = req.currentUser?.id;
+
+  if (!req.file) throw new BadRequestError("No file selected!");
+
+  const file = req.file;
+
+  if (!file.mimetype.startsWith("image")) throw new BadRequestError("Only images allowed!");
+
+  if (file.size > 1000000) throw new BadRequestError("Only 1MB");
+
+  const user = await User.findById(id);
+
+  if (!user) throw new BadRequestError("no user found");
+
+  const storageRef = ref(storage, `/images/${user.id}.jpg`);
+
+  const uploadTask = uploadBytesResumable(storageRef, file.buffer);
+
+  uploadTask.on(
+    "state_changed",
+    () => {},
+    (error) => {
+      console.log(error);
+      res.status(200).send("error");
+    },
+    () => {
+      getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+        user.picture = url;
+        user.thumbnail = url;
+        user.save().then(() => res.status(200).send(user));
+      });
+    }
+  );
 };
