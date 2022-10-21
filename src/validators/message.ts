@@ -19,5 +19,3 @@ export const updateMessageValidator = [
     .withMessage("Invalid Message"),
   body("content").isLength({ min: 1, max: 500 }).withMessage("Invalid Message"),
 ];
-
-export const getMessagesValidator = [param("id").isMongoId().withMessage("Invalid inputs")];

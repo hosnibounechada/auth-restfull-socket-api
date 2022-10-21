@@ -1,14 +1,16 @@
-import { RequestValidator } from "../middlewares";
 import express from "express";
-import { getMessagesValidator, idValidator, sendMessageValidator, updateMessageValidator } from "../validators/message";
-import { getMessage, getMessages, removeMessage, sendMessage, updateMessage } from "../controllers/message";
+import { RequestValidator } from "../middlewares";
+import { idValidator, sendMessageValidator, updateMessageValidator } from "../validators/message";
+import { deleteConversation, getMessage, getMessages, markAsViewed, removeMessage, sendMessage, updateMessage } from "../controllers/message";
 
 const router = express.Router();
 
-router.post("/", sendMessageValidator, RequestValidator, sendMessage);
 router.get("/:id", idValidator("id"), RequestValidator, getMessage);
-router.put("/:id", updateMessageValidator, RequestValidator, updateMessage);
+router.post("/", sendMessageValidator, RequestValidator, sendMessage);
 router.delete("/:id", idValidator("id"), RequestValidator, removeMessage);
-router.get("/private/:id", getMessagesValidator, RequestValidator, getMessages);
+router.put("/:id", updateMessageValidator, RequestValidator, updateMessage);
+router.get("/private/:userId", idValidator("userId"), RequestValidator, getMessages);
+router.get("/markAsViewed/:userId", idValidator("userId"), RequestValidator, markAsViewed);
+router.delete("/conversation/:userId", idValidator("userId"), RequestValidator, deleteConversation);
 
 export default router;
