@@ -31,6 +31,7 @@ export interface UserDoc extends mongoose.Document<any> {
   friends: {
     id: string;
     sender: string;
+    type?: string;
     lastMessage?: string;
     viewed?: boolean;
   }[];
@@ -124,6 +125,11 @@ const userSchema = new mongoose.Schema(
         {
           id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
           sender: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+          type: {
+            type: String,
+            enum: ["text", "image"],
+            default: "text",
+          },
           lastMessage: {
             type: String,
             default: "Say Hi",
