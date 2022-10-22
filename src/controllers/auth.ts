@@ -1,20 +1,18 @@
+import path from "path";
 import { Request, Response } from "express";
 import { isValidObjectId } from "mongoose";
 
 import redis from "../services/redis";
 import drive from "../services/drive";
 import twilio from "../services/twilio";
-import { sendEmail } from "../services/mailer";
 
 import { User } from "../models";
 import { TWILIO_STATUS } from "../types";
-import { BadRequestError, GoneError, NotFoundError, NotAuthorizedError, NotAuthenticatedError } from "../errors";
-import { RandomGenerator, PasswordHash, JwtProvider } from "../services";
-import { confirmationEmail, resetPasswordEmail } from "../templates/email";
+import { sendEmail } from "../services/mailer";
 
-import FormData from "form-data";
-import storage from "../services/firebase";
-import { uploadBytesResumable, ref, getDownloadURL } from "firebase/storage";
+import { confirmationEmail, resetPasswordEmail } from "../templates/email";
+import { RandomGenerator, PasswordHash, JwtProvider, FirebaseService } from "../services";
+import { BadRequestError, GoneError, NotFoundError, NotAuthorizedError, NotAuthenticatedError } from "../errors";
 
 const client = redis.getRedisClient();
 
@@ -404,29 +402,21 @@ export const uploadToFirebase = async (req: Request, res: Response) => {
 
   if (!file.mimetype.startsWith("image")) throw new BadRequestError("Only images allowed!");
 
-  if (file.size > 1000000) throw new BadRequestError("Only 1MB");
+  if (file.size > 1024 * 1024) throw new BadRequestError("Only 1MB");
 
   const user = await User.findById(id);
 
   if (!user) throw new BadRequestError("no user found");
 
-  const storageRef = ref(storage, `/images/${user.id}.jpg`);
+  const locationPath = `/images/${user.id + Date.now()}${path.extname(file.originalname).toLowerCase()}`;
 
-  const uploadTask = uploadBytesResumable(storageRef, file.buffer);
+  const url = await FirebaseService.uploadFile(file, locationPath);
 
-  uploadTask.on(
-    "state_changed",
-    () => {},
-    (error) => {
-      console.log(error);
-      res.status(200).send("error");
-    },
-    () => {
-      getDownloadURL(uploadTask.snapshot.ref).then((url) => {
-        user.picture = url;
-        user.thumbnail = url;
-        user.save().then(() => res.status(200).send(user));
-      });
-    }
-  );
+  if (!url) throw new BadRequestError("Couldn't upload file");
+
+  user.set({ picture: url, thumbnail: url });
+
+  await user.save();
+
+  res.send({ picture: user.picture, thumbnail: user.thumbnail });
 };
