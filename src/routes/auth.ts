@@ -1,5 +1,5 @@
-import express from "express";
-import multer from "multer";
+import express, { Request } from "express";
+import multer, { FileFilterCallback, Multer } from "multer";
 import {
   register,
   verifyEmail,
@@ -39,7 +39,13 @@ import {
 } from "../validators/auth";
 
 const router = express.Router();
-const upload = multer();
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 1024 * 1024,
+  },
+});
 
 router.post("/register", registerValidator, RequestValidator, register);
 
