@@ -1,4 +1,4 @@
-import { ProjectionType } from "mongoose";
+import mongoose, { ProjectionType } from "mongoose";
 import { UserDoc } from "../../models";
 
 export function getUserProjections(id: string | undefined): ProjectionType<UserDoc> | null | undefined {
