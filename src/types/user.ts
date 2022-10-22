@@ -13,3 +13,10 @@ export type OnlineType = {
   displayName: string;
   thumbnail: string;
 };
+
+export const USER_STATUS = {
+  FRIEND: "friend",
+  REQUESTED: "requested",
+  INVITED: "invited",
+  STRANGER: "stranger",
+};
