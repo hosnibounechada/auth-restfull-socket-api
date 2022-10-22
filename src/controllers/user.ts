@@ -3,9 +3,9 @@ import { BadRequestError, NotFoundError } from "../errors";
 import { User } from "../models";
 import { MongoTransaction } from "../services";
 import { getUserProjections } from "../mongo/projections/user";
-import { friendsMessagesPipeLine, onlineFriendsPipeLine } from "../mongo/pipes/user";
+import { blockedUsersPipeLine, friendsMessagesPipeLine, onlineFriendsPipeLine, searchUsersPipeLine } from "../mongo/pipes/user";
 import redis from "../services/redis";
-import { FriendType, OnlineType } from "../types/user";
+import { FriendType, OnlineType, USER_STATUS } from "../types/user";
 
 const client = redis.getRedisClient();
 
@@ -17,7 +17,20 @@ export const getUserById = async (req: Request, res: Response) => {
 
   if (!user) throw new NotFoundError();
 
-  res.send({ user });
+  const userObj = {
+    id: user.id,
+    displayName: user.displayName,
+    thumbnail: user.thumbnail,
+    status: user.friends.length
+      ? USER_STATUS.FRIEND
+      : user.requests.length
+      ? USER_STATUS.REQUESTED
+      : user.invitations.length
+      ? USER_STATUS.INVITED
+      : USER_STATUS.STRANGER,
+  };
+
+  res.send({ user: userObj });
 };
 
 export const getUsersByDisplayName = async (req: Request, res: Response) => {
@@ -26,12 +39,7 @@ export const getUsersByDisplayName = async (req: Request, res: Response) => {
   const page = +req.query.page! || 0;
   const limit = 2;
 
-  const users = await User.find(
-    { displayName: { $regex: "^" + displayName, $options: "i" }, _id: { $ne: id }, "blocked.id": { $ne: id } },
-    getUserProjections(id)
-  )
-    .skip(page * limit)
-    .limit(limit);
+  const users = await User.aggregate(searchUsersPipeLine(id, displayName, page * limit, limit));
 
   res.send({ users });
 };
@@ -369,4 +377,53 @@ export const reportUser = async (req: Request, res: Response) => {
   if (!user.modifiedCount) return res.send({ success: false });
 
   return res.send({ success });
+};
+
+export const getFriends = async (req: Request, res: Response) => {
+  const id = req.currentUser?.id;
+  const page = +req.query.page! || 0;
+  const limit = 2;
+
+  const friends = await User.find({ "friends.id": id })
+    .select({ id: 1, displayName: 1, thumbnail: 1 })
+    .skip(page * limit)
+    .limit(limit);
+
+  res.send({ friends });
+};
+
+export const getSentRequests = async (req: Request, res: Response) => {
+  const id = req.currentUser?.id;
+  const page = +req.query.page! || 0;
+  const limit = 2;
+
+  const requests = await User.find({ "invitations.id": id })
+    .select({ id: 1, displayName: 1, thumbnail: 1 })
+    .skip(page * limit)
+    .limit(limit);
+
+  res.send({ requests });
+};
+
+export const getReceivedInvitations = async (req: Request, res: Response) => {
+  const id = req.currentUser?.id;
+  const page = +req.query.page! || 0;
+  const limit = 2;
+
+  const invitations = await User.find({ "requests.id": id })
+    .select({ id: 1, displayName: 1, thumbnail: 1 })
+    .skip(page * limit)
+    .limit(limit);
+
+  res.send({ invitations });
+};
+
+export const getBlockedUsers = async (req: Request, res: Response) => {
+  const id = req.currentUser?.id;
+  const page = +req.query.page! || 0;
+  const limit = 2;
+
+  const users = await User.aggregate(blockedUsersPipeLine(id, page * limit, limit));
+
+  res.send({ users });
 };
