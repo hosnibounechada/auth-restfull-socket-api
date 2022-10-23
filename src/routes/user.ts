@@ -15,6 +15,7 @@ import {
   getReceivedInvitations,
   getFriends,
   getBlockedUsers,
+  unSendRequest,
 } from "../controllers/user";
 import { RequestValidator } from "../middlewares";
 import { idValidator } from "../validators/user";
@@ -24,6 +25,7 @@ const router = express.Router();
 router.get("/", getUsersByDisplayName);
 router.get("/:id", idValidator("id"), RequestValidator, getUserById);
 router.get("/sendRequest/:to", idValidator("to"), RequestValidator, sendRequest);
+router.get("/unSendRequest/:to", idValidator("to"), RequestValidator, unSendRequest);
 router.get("/acceptRequest/:from", idValidator("from"), RequestValidator, acceptRequest);
 router.get("/rejectRequest/:from", idValidator("from"), RequestValidator, rejectRequest);
 router.get("/unfriendUser/:userId", idValidator("userId"), RequestValidator, unfriendUser);

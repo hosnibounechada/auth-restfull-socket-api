@@ -93,6 +93,8 @@ export const sendRequest = async (req: Request, res: Response) => {
       _id: id,
       "friends.id": { $ne: to },
       "requests.id": { $ne: to },
+      "invitations.id": { $ne: to },
+      "blocked.id": { $ne: to },
     },
     {
       $push: {
@@ -107,13 +109,61 @@ export const sendRequest = async (req: Request, res: Response) => {
     {
       _id: to,
       "friends.id": { $ne: id },
+      "requests.id": { $ne: id },
       "invitations.id": { $ne: id },
+      "blocked.id": { $ne: id },
     },
     {
       $addToSet: {
         invitations: {
           id: id,
         },
+      },
+    },
+    { session }
+  );
+
+  if (!currentUser.modifiedCount || !user.modifiedCount) {
+    await MongoTransaction.abortTransactionAndEndSession(session);
+
+    return res.send({ success });
+  }
+  await MongoTransaction.commitTransactionAndEndSession(session);
+
+  success = true;
+
+  return res.send({ success });
+};
+
+export const unSendRequest = async (req: Request, res: Response) => {
+  let success = false;
+
+  const id = req.currentUser?.id;
+
+  const { to } = req.params;
+
+  const session = await MongoTransaction.startSessionAndStartTransaction();
+
+  const currentUser = await User.updateOne(
+    {
+      _id: id,
+      "requests.id": to,
+    },
+    {
+      $pull: {
+        requests: { id: to },
+      },
+    },
+    { session }
+  );
+  const user = await User.updateOne(
+    {
+      _id: to,
+      "invitations.id": id,
+    },
+    {
+      $pull: {
+        invitations: { id: id },
       },
     },
     { session }
@@ -144,6 +194,7 @@ export const acceptRequest = async (req: Request, res: Response) => {
     {
       _id: id,
       "friends.id": { $ne: from },
+      "invitations.id": from,
     },
     {
       $addToSet: {
@@ -158,10 +209,11 @@ export const acceptRequest = async (req: Request, res: Response) => {
     },
     { session }
   );
-  const fromUser = await User.updateOne(
+  const user = await User.updateOne(
     {
       _id: from,
       "friends.id": { $ne: id },
+      "requests.id": id,
     },
     {
       $addToSet: {
@@ -177,7 +229,7 @@ export const acceptRequest = async (req: Request, res: Response) => {
     { session }
   );
 
-  if (!currentUser.modifiedCount || !fromUser.modifiedCount) {
+  if (!currentUser.modifiedCount || !user.modifiedCount) {
     await MongoTransaction.abortTransactionAndEndSession(session);
 
     return res.send({ success });
@@ -209,7 +261,7 @@ export const rejectRequest = async (req: Request, res: Response) => {
     },
     { session }
   );
-  const fromUser = await User.updateOne(
+  const user = await User.updateOne(
     {
       _id: from,
     },
@@ -221,7 +273,7 @@ export const rejectRequest = async (req: Request, res: Response) => {
     { session }
   );
 
-  if (!currentUser.modifiedCount || !fromUser.modifiedCount) {
+  if (!currentUser.modifiedCount || !user.modifiedCount) {
     await MongoTransaction.abortTransactionAndEndSession(session);
 
     return res.send({ success });
