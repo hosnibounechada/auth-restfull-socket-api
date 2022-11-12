@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import { EVENTS } from "../types";
 import { addUser, getUsers, removeUser, friends } from "../utils/user";
 import redis from "../../services/redis";
+import { getFriends } from "../controllers/auth";
 
 const client = redis.getRedisClient();
 
@@ -16,14 +17,16 @@ export const registerAuthHandler = (io: Server, socket: Socket) => {
     console.log(`id:${userId};`);
     socket.join(userId);
     // get friends from Redis instead of memory
-    //socket.join(friends[userId]);
+    // socket.join(friends[userId]);
+    const friendsIds = await getFriends(userId);
+    if (friendsIds) socket.join(friendsIds);
     // will be removed and store connection status in Redis instead
     addUser({ userId: userId, socketId: socket.id });
     await client.sAdd("online", userId);
     // send proper status notification.
     const notification = { id: userId, status: true };
     // broadcast the event to all subscribers
-    socket.to(userId).emit("statusNotification", notification);
+    socket.to(userId + "N").emit("statusNotification", notification);
     //only for debugging purposes
     console.log(getUsers());
   };
@@ -38,7 +41,7 @@ export const registerAuthHandler = (io: Server, socket: Socket) => {
     // will be updated to proper notification
     const notification = { id: userId, status: false };
     // broadcast the event to all subscribers
-    socket.to(userId).emit("statusNotification", notification);
+    socket.to(userId + "N").emit("statusNotification", notification);
     // for debugging purposes
     console.log(getUsers());
   };

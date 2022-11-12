@@ -18,7 +18,7 @@ export const registerMessagesHandler = (io: Server, socket: Socket) => {
     console.log(message);
     // send private message to particular user
     if (!message) return;
-    io.to(message.from.toString()).emit(EVENTS.MESSAGE_TO_CLIENT, message);
-    //socket.emit(EVENTS.MESSAGE_TO_CLIENT, message);
+    io.to(message.to.toString()).emit(EVENTS.MESSAGE_TO_CLIENT, message);
+    // socket.emit(EVENTS.MESSAGE_TO_CLIENT, message);
   });
 };
