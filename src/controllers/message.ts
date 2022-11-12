@@ -106,7 +106,7 @@ export const getMessages = async (req: Request, res: Response) => {
   const currentUserId = req.currentUser?.id!;
   const { userId } = req.params;
   const page = +req.query.page! || 0;
-  const limit = 2;
+  const limit = 20;
 
   const messages = await Message.find({
     $or: [

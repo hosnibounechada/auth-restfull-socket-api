@@ -32,7 +32,7 @@ app.use(hpp());
 app.use(
   rateLimit({
     windowMs: 10 * 60 * 1000,
-    max: 100,
+    max: 1000,
   })
 );
 
