@@ -49,6 +49,8 @@ export const getOnlineFriends = async (req: Request, res: Response) => {
 
   const friends: OnlineType[] = await User.aggregate(onlineFriendsPipeLine(id));
 
+  if (friends.length === 0) return res.send({ result: [] });
+
   const friendsIds = friends.map((friend) => friend.id);
 
   const online = await client.smIsMember("online", friendsIds);
@@ -61,10 +63,12 @@ export const getOnlineFriends = async (req: Request, res: Response) => {
 export const getFriendsMessages = async (req: Request, res: Response) => {
   const id = req.currentUser?.id!;
   const page = +req.query.page! || 0;
-  const limit = 1;
+  const limit = 2;
   let skip = page * limit;
 
   const friends: FriendType[] = await User.aggregate(friendsMessagesPipeLine(id, skip, limit));
+
+  if (friends.length === 0) return res.send({ result: [] });
 
   const friendsIds = friends.map((friend) => friend.id);
 
