@@ -9,16 +9,17 @@ export const registerMessagesHandler = (io: Server, socket: Socket) => {
     console.log("data:", data);
   });
 
-  socket.on(EVENTS.MESSAGE_TO_SERVER, async (data: MessageType) => {
-    //for more security reasons we can extract the user id from socket.handshake.auth.token
+  socket.on(EVENTS.MESSAGE_TO_SERVER, async (data: MessageType, callback: CallableFunction) => {
     if (!DataValidator.isValid(messageSchema, data)) return;
+
     console.log("from client", socket.handshake.headers.user, ":", data);
-    // save message in persistent database before triggering the event
+
     const message = await sendMessage(data);
-    console.log(message);
-    // send private message to particular user
-    if (!message) return;
+
+    if (!message) return callback({ status: false });
+
+    callback({ status: true, message });
+
     io.to(message.to.toString()).emit(EVENTS.MESSAGE_TO_CLIENT, message);
-    // socket.emit(EVENTS.MESSAGE_TO_CLIENT, message);
   });
 };
